@@ -7,10 +7,14 @@ class ProjectDetail(BaseModel):
     constituency: str
     description: str
     sanctioned_amount: int
+    amount_disbursed: int = 0
+    vendor: str = ""
+    status_text: str = ""
     anomaly_score: float
     stall_probability: float
     risk_category: str
     risk_score: float
+    Anomaly_Score_Ensemble: float = 0.0
     
 class PaginatedResponse(BaseModel):
     total: int

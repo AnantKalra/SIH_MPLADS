@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { getProjects } from '../api';
 import ProjectCard from './ProjectCard';
+import ProjectDetailModal from './ProjectDetailModal';
 import { ChevronDown } from 'lucide-react';
 
 const PriorityQueue = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProject, setSelectedProject] = useState(null);
 
   useEffect(() => {
     getProjects().then(data => {
@@ -33,10 +35,20 @@ const PriorityQueue = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((proj, i) => (
-            <ProjectCard key={proj.Work_Id || i} project={proj} />
+            <ProjectCard 
+              key={proj.Work_Id || i} 
+              project={proj} 
+              onClick={() => setSelectedProject(proj)} 
+            />
           ))}
         </div>
       )}
+
+      {/* Render the Project Details Modal if a project is selected */}
+      <ProjectDetailModal 
+        project={selectedProject} 
+        onClose={() => setSelectedProject(null)} 
+      />
     </div>
   );
 };

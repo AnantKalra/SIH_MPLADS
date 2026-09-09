@@ -38,12 +38,31 @@ class DataLoader:
             
             self.merged = ml_df.copy()
             
-            # Create synthetic text details so API is foolproof without Data parsing issues
-            self.merged['sanctioned_amount'] = (np.random.rand(len(self.merged)) * 5000000).astype(int)
+            # Map actual dataset fields into frontend properties
+            self.merged['sanctioned_amount'] = self.merged.get('Sanction Amount ( ₹ )', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['amount_disbursed'] = self.merged.get('Amount Disbursed ( ₹ )', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['vendor'] = np.random.choice(["Surya Electricals", "District Planning Office", "L&T Infrastructure", "Local Panchayat", "Apex Builders", "Global Constructions"], len(self.merged))
+            self.merged['status_text'] = np.where(self.merged.get('Is_Stalled', 0) == 1, "Stalled / Delayed", "In Progress")
+            
+            # Intelligent override for completed projects
+            self.merged.loc[(self.merged['amount_disbursed'] >= self.merged['sanctioned_amount']) & (self.merged['sanctioned_amount'] > 0), 'status_text'] = "Completed"
+
             self.merged['state'] = np.random.choice(["Maharashtra", "Gujarat", "Karnataka", "Delhi", "Tamil Nadu", "UP"], len(self.merged))
             self.merged['constituency'] = np.random.choice(["Central", "North", "South", "East"], len(self.merged))
             self.merged['description'] = "Infrastructure and developmental works under MPLADS scheme."
             self.merged['Work_Id'] = self.merged['Work_Id'].fillna(0).astype(int).astype(str)
+            
+            # Now load the actual REAL Flagged_Anomalies!
+            try:
+                flagged_df = pd.read_csv(r"c:\Users\Manav Motiramani\Desktop\SIH_MPLADS\ML training\Flagged_Anomalies.csv")
+                flagged_df['Work_Id'] = flagged_df['Work_Id'].fillna(0).astype(int).astype(str)
+                self.merged = pd.merge(self.merged, flagged_df[['Work_Id', 'Anomaly_Score_Ensemble']], on='Work_Id', how='left')
+                self.merged['Anomaly_Score_Ensemble'] = self.merged['Anomaly_Score_Ensemble'].fillna(0)
+                # Overwrite the fake risk score with the real ensemble score!
+                self.merged['risk_score'] = self.merged['Anomaly_Score_Ensemble']
+            except Exception as e:
+                print(f"Could not load Flagged Anomalies: {e}")
+                self.merged['Anomaly_Score_Ensemble'] = self.merged['risk_score']
             
             self.merged = self.merged.drop_duplicates(subset=['Work_Id'])
             print(f"Successfully loaded {len(self.merged)} projects into memory.")
