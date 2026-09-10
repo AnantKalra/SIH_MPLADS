@@ -8,6 +8,14 @@ class ProjectDetail(BaseModel):
     description: str
     sanctioned_amount: int
     amount_disbursed: int = 0
+    recommended_amount: int = 0
+    sanction_delay_days: int = 0
+    completion_days: int = 0
+    mp_avg_amount: int = 0
+    is_round_amount: int = 0
+    completed_no_image: int = 0
+    has_banned_keyword: int = 0
+    is_duplicate_desc: int = 0
     vendor: str = ""
     status_text: str = ""
     anomaly_score: float

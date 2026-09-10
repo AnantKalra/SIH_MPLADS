@@ -41,16 +41,39 @@ class DataLoader:
             # Map actual dataset fields into frontend properties
             self.merged['sanctioned_amount'] = self.merged.get('Sanction Amount ( ₹ )', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
             self.merged['amount_disbursed'] = self.merged.get('Amount Disbursed ( ₹ )', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['recommended_amount'] = self.merged.get('RECOMMENDED AMOUNT   ( ₹ )', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['sanction_delay_days'] = self.merged.get('Sanction_Delay_Days', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['completion_days'] = self.merged.get('Completion_Days', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['mp_avg_amount'] = self.merged.get('MP_Avg_Amount', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['is_round_amount'] = self.merged.get('Is_Round_Amount', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['completed_no_image'] = self.merged.get('Completed_No_Image', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['has_banned_keyword'] = self.merged.get('Has_Banned_Keyword', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+            self.merged['is_duplicate_desc'] = self.merged.get('Is_Duplicate_Description', pd.Series([0]*len(self.merged))).fillna(0).astype(int)
+
             self.merged['vendor'] = np.random.choice(["Surya Electricals", "District Planning Office", "L&T Infrastructure", "Local Panchayat", "Apex Builders", "Global Constructions"], len(self.merged))
             self.merged['status_text'] = np.where(self.merged.get('Is_Stalled', 0) == 1, "Stalled / Delayed", "In Progress")
             
             # Intelligent override for completed projects
             self.merged.loc[(self.merged['amount_disbursed'] >= self.merged['sanctioned_amount']) & (self.merged['sanctioned_amount'] > 0), 'status_text'] = "Completed"
 
-            self.merged['state'] = np.random.choice(["Maharashtra", "Gujarat", "Karnataka", "Delhi", "Tamil Nadu", "UP"], len(self.merged))
-            self.merged['constituency'] = np.random.choice(["Central", "North", "South", "East"], len(self.merged))
-            self.merged['description'] = "Infrastructure and developmental works under MPLADS scheme."
             self.merged['Work_Id'] = self.merged['Work_Id'].fillna(0).astype(int).astype(str)
+
+            # Map REAL textual metadata from raw dataset
+            try:
+                clean_df = pd.read_csv(r"c:\Users\Manav Motiramani\Desktop\SIH_MPLADS\ML training\MPLADS_Clean.csv", usecols=['Work_Id', 'State', 'Constituency'], on_bad_lines='skip')
+                clean_df['Work_Id'] = clean_df['Work_Id'].fillna(0).astype(int).astype(str)
+                clean_df = clean_df.drop_duplicates(subset=['Work_Id'])
+                self.merged = pd.merge(self.merged, clean_df, on='Work_Id', how='left')
+                
+                # Assign with fallback for any unmapped anomalous rows
+                self.merged['state'] = self.merged['State'].fillna("Delhi") 
+                self.merged['constituency'] = self.merged['Constituency'].fillna("Central")
+            except Exception as e:
+                print(f"Could not load authentic states: {e}")
+                self.merged['state'] = np.random.choice(["Maharashtra", "Gujarat", "Karnataka", "Delhi", "Tamil Nadu", "Uttar Pradesh"], len(self.merged))
+                self.merged['constituency'] = np.random.choice(["Central", "North", "South", "East"], len(self.merged))
+                
+            self.merged['description'] = "Infrastructure and developmental works under MPLADS scheme."
             
             # Now load the actual REAL Flagged_Anomalies!
             try:
@@ -82,14 +105,28 @@ class DataLoader:
             "high_priority": len(self.merged[self.merged['risk_category'].isin(['High Priority', 'Critical Audit Required', 'Financial Irregularity'])])
         }
         
-    def get_projects(self, page=1, limit=20, sort_by='risk_score', sort_asc=False):
+    def get_projects(self, page=1, limit=20, sort_by='risk_score', sort_asc=False,
+                     state=None, status=None, risk=None, min_amount=None, max_amount=None):
         if self.merged.empty:
             return [], 0
             
         if sort_by not in self.merged.columns:
             sort_by = 'risk_score'
             
-        df = self.merged.sort_values(by=sort_by, ascending=sort_asc)
+        df = self.merged
+
+        if state:
+            df = df[df['state'] == state]
+        if status:
+            df = df[df['status_text'] == status]
+        if risk:
+            df = df[df['risk_category'] == risk]
+        if min_amount is not None:
+            df = df[df['sanctioned_amount'] >= min_amount]
+        if max_amount is not None:
+            df = df[df['sanctioned_amount'] <= max_amount]
+            
+        df = df.sort_values(by=sort_by, ascending=sort_asc)
         start = (page - 1) * limit
         end = start + limit
         

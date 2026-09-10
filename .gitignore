@@ -3,3 +3,7 @@ implementation_plan.md
 FrontEnd_Details 
 node_modules
 .vite
+.env 
+Web_Dev/backend/.env
+__pycache__/
+*.pyc

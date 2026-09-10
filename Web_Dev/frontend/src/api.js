@@ -9,12 +9,17 @@ export const getStats = async () => {
   return res.data;
 };
 
-export const getProjects = async (page = 1, limit = 20, sort_by = 'risk_score') => {
-  const res = await api.get('/projects', { params: { page, limit, sort_by }});
+export const getProjects = async (page = 1, limit = 20, sort_by = 'risk_score', filters = {}) => {
+  const res = await api.get('/projects', { params: { page, limit, sort_by, ...filters }});
   return res.data;
 };
 
 export const searchProjects = async (q) => {
   const res = await api.get('/projects/search', { params: { q }});
+  return res.data;
+};
+
+export const generateProjectSummary = async (projectData) => {
+  const res = await api.post('/projects/summary', projectData);
   return res.data;
 };
