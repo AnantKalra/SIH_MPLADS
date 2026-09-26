@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 print("1. Loading raw dataset...")
-df = pd.read_csv(r"d:\Anant\MPLAD\DATA\MPLADS_ML_Features.csv")
+df = pd.read_csv("MPLADS_ML_Features.csv")
 
 # Define target
 y = df['Is_Stalled']

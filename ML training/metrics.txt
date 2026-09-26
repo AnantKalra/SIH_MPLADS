@@ -1,0 +1,36 @@
+﻿1. Loading raw dataset...
+Total dataset size: 106520
+Total stalled projects: 10172 (9.55%)
+
+2. Splitting into Train and Test sets...
+Training features shape: (85216, 59)
+Testing features shape: (21304, 59)
+
+3. Building the Supervised Pipeline...
+
+4. Training the Random Forest Classifier...
+
+5. Evaluating the Model on the Holdout Test Set...
+
+--- Classification Report ---
+                  precision    recall  f1-score   support
+
+Active/Completed       1.00      0.99      1.00     19270
+         Stalled       0.94      0.97      0.96      2034
+
+        accuracy                           0.99     21304
+       macro avg       0.97      0.98      0.98     21304
+    weighted avg       0.99      0.99      0.99     21304
+
+--- Confusion Matrix ---
+True Active: 19145 | False Stalled (False Pos): 125
+False Active (Missed): 51 | True Stalled (Caught!): 1983
+
+ROC-AUC Score: 0.9992
+
+Top 5 Most Important Features for Predicting 'Stalled':
+- Sanction_Delay_Days: 0.0756
+- RECOMMENDED AMOUNT   ( ₹ ): 0.0692
+- Rec_to_Completion_Days: 0.0650
+- Delay_vs_State_Avg_Ratio: 0.0606
+- Completion_Days: 0.0605

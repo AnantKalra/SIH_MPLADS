@@ -1,11 +1,14 @@
 import pandas as pd
 import numpy as np
+import os
 
 class DataLoader:
     def __init__(self, ml_engine):
         print("Loading in-memory dataset...")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(base_dir, "data")
         try:
-            ml_df = pd.read_csv(r"c:\Users\Manav Motiramani\Desktop\SIH_MPLADS\ML training\MPLADS_ML_Features.csv", on_bad_lines='skip', engine='python')
+            ml_df = pd.read_csv(os.path.join(data_dir, "MPLADS_ML_Features.csv"), on_bad_lines='skip', engine='python')
             
             # Hackathon optimization using derived Anomaly outputs
             iso_scaled = ml_df['Anomaly_Feature_Count'].fillna(0) / max(1, ml_df['Anomaly_Feature_Count'].max())
@@ -60,7 +63,7 @@ class DataLoader:
 
             # Map REAL textual metadata from raw dataset
             try:
-                clean_df = pd.read_csv(r"c:\Users\Manav Motiramani\Desktop\SIH_MPLADS\ML training\MPLADS_Clean.csv", usecols=['Work_Id', 'State', 'Constituency'], on_bad_lines='skip')
+                clean_df = pd.read_csv(os.path.join(data_dir, "MPLADS_Clean.csv"), usecols=['Work_Id', 'State', 'Constituency', 'Work description'], on_bad_lines='skip')
                 clean_df['Work_Id'] = clean_df['Work_Id'].fillna(0).astype(int).astype(str)
                 clean_df = clean_df.drop_duplicates(subset=['Work_Id'])
                 self.merged = pd.merge(self.merged, clean_df, on='Work_Id', how='left')
@@ -68,16 +71,16 @@ class DataLoader:
                 # Assign with fallback for any unmapped anomalous rows
                 self.merged['state'] = self.merged['State'].fillna("Delhi") 
                 self.merged['constituency'] = self.merged['Constituency'].fillna("Central")
+                self.merged['description'] = self.merged['Work description'].fillna("Implementation and developmental works under MPLADS Scheme")
             except Exception as e:
                 print(f"Could not load authentic states: {e}")
                 self.merged['state'] = np.random.choice(["Maharashtra", "Gujarat", "Karnataka", "Delhi", "Tamil Nadu", "Uttar Pradesh"], len(self.merged))
                 self.merged['constituency'] = np.random.choice(["Central", "North", "South", "East"], len(self.merged))
-                
-            self.merged['description'] = "Infrastructure and developmental works under MPLADS scheme."
+                self.merged['description'] = "Implementation and developmental works under MPLADS Scheme"
             
             # Now load the actual REAL Flagged_Anomalies!
             try:
-                flagged_df = pd.read_csv(r"c:\Users\Manav Motiramani\Desktop\SIH_MPLADS\ML training\Flagged_Anomalies.csv")
+                flagged_df = pd.read_csv(os.path.join(data_dir, "Flagged_Anomalies.csv"))
                 flagged_df['Work_Id'] = flagged_df['Work_Id'].fillna(0).astype(int).astype(str)
                 self.merged = pd.merge(self.merged, flagged_df[['Work_Id', 'Anomaly_Score_Ensemble']], on='Work_Id', how='left')
                 self.merged['Anomaly_Score_Ensemble'] = self.merged['Anomaly_Score_Ensemble'].fillna(0)
