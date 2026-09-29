@@ -2,7 +2,7 @@ import joblib
 import pandas as pd
 import os
 
-OUT_DIR = "saved_models"
+OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_models")
 
 class MLEngine:
     def __init__(self):
